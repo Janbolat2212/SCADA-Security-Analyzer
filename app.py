@@ -35,54 +35,54 @@ if not DATA_FILE.exists():
 
         st.rerun()
 
-    st.stop()
+if DATA_FILE.exists():
 
-st.success("SCADA dataset loaded from saved storage!")
+    st.success("SCADA dataset loaded from saved storage!")
 
-# Read only the columns needed for statistics
-@st.cache_data(show_spinner="Analyzing dataset...")
-def load_data(file_path, modified_time):
-    labels = pd.read_csv(
-        file_path,
-        usecols=["Traffic_Category", "Attack_Type"]
+    # Read only the columns needed for statistics
+    @st.cache_data(show_spinner="Analyzing dataset...")
+    def load_data(file_path, modified_time):
+        labels = pd.read_csv(
+            file_path,
+            usecols=["Traffic_Category", "Attack_Type"]
+        )
+        preview = pd.read_csv(file_path, nrows=20)
+        return labels, preview
+
+    data, preview = load_data(
+        str(DATA_FILE),
+        DATA_FILE.stat().st_mtime_ns
     )
-    preview = pd.read_csv(file_path, nrows=20)
-    return labels, preview
 
-data, preview = load_data(
-    str(DATA_FILE),
-    DATA_FILE.stat().st_mtime_ns
-)
+    normal = (data["Traffic_Category"] == "normal_traffic").sum()
+    attacks = (data["Traffic_Category"] == "attack").sum()
 
-normal = (data["Traffic_Category"] == "normal_traffic").sum()
-attacks = (data["Traffic_Category"] == "attack").sum()
+    st.subheader("Dataset Information")
 
-st.subheader("Dataset Information")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Records", len(data))
+    col2.metric("Normal Traffic", int(normal))
+    col3.metric("Labeled Attacks", int(attacks))
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Records", len(data))
-col2.metric("Normal Traffic", int(normal))
-col3.metric("Labeled Attacks", int(attacks))
+    st.subheader("Dataset Preview")
+    st.dataframe(preview)
 
-st.subheader("Dataset Preview")
-st.dataframe(preview)
+    st.subheader("Traffic Distribution")
+    st.bar_chart(data["Traffic_Category"].value_counts())
 
-st.subheader("Traffic Distribution")
-st.bar_chart(data["Traffic_Category"].value_counts())
+    st.subheader("Cyberattack Types")
+    attack_data = data[data["Traffic_Category"] == "attack"]
+    attack_counts = attack_data["Attack_Type"].value_counts()
 
-st.subheader("Cyberattack Types")
-attack_data = data[data["Traffic_Category"] == "attack"]
-attack_counts = attack_data["Attack_Type"].value_counts()
+    st.bar_chart(attack_counts)
 
-st.bar_chart(attack_counts)
+    st.subheader("Attack Statistics")
+    st.dataframe(attack_counts.rename("Records"))
 
-st.subheader("Attack Statistics")
-st.dataframe(attack_counts.rename("Records"))
-
-st.caption(
-    "Statistics use the original dataset labels. "
-    "Machine learning detection will be added next."
-)
+    st.caption(
+        "Statistics use the original dataset labels. "
+        "Machine learning detection will be added next."
+    )
 
 # Machine Learning Results
 st.subheader("Machine Learning Model Comparison")
