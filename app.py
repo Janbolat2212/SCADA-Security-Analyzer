@@ -160,15 +160,18 @@ else:
 
 # Interactive Traffic Analysis
 st.subheader("🔎 SCADA Traffic Analyzer")
-
+st.caption(
+    "Synthetic demonstration data. Predictions are illustrative, "
+    "not measured attack-detection accuracy."
+)
 from joblib import load
 
 model_file = Path("models/random_forest.joblib")
-test_file = Path("data/modbus_test_sample.csv")
+test_file = Path("demo/synthetic_modbus_demo.csv")
 
 source = st.radio(
     "Select data source",
-    ["Saved Test Sample", "Upload New CSV"],
+    ["Synthetic Demo", "Upload New CSV"],
     horizontal=True
 )
 
@@ -189,7 +192,7 @@ if st.button("Analyze Traffic", type="primary"):
     elif source == "Upload New CSV" and uploaded is None:
         st.warning("Please select a CSV file first.")
 
-    elif source == "Saved Test Sample" and not test_file.exists():
+    elif source == "Synthetic Demo" and not test_file.exists():
         st.error("Test sample not found.")
 
     else:
@@ -198,7 +201,7 @@ if st.button("Analyze Traffic", type="primary"):
             saved = load(model_file)
             features = saved["features"]
 
-            if source == "Saved Test Sample":
+            if source == "Synthetic Demo":
                 traffic = pd.read_csv(test_file)
             else:
                 needed = set(features + ["Protocol"])
